@@ -22,14 +22,15 @@ plt.rcParams['font.sans-serif'] = prop.get_name()
 
 c_online = '#1984c5'
 c_seq = '#a12e21'
-c1, c2, c3, c4 = ["#e1a692", "#de6e56", "#e14b31", "#a12e21"]
+colors = ["#e1a692", "#de6e56", "#e14b31", "#a12e21", "#1984c5"]
 
 def iteration_plot(data, 
                    labels,
                    max_iter = 3,
-                   colors = ['#1984c5', "#a12e21"],
+                   colors = colors,
                    fill=True,
                    ylabel='Accuracy',
+                   single_pass=False,
                    one_shot=None,
                    path=None):
     
@@ -37,17 +38,11 @@ def iteration_plot(data,
     ax = fig.add_subplot(111)
     
     for i, label in enumerate(labels):
-        ax.plot(np.arange(1, max_iter+1), data[i].mean(axis=0), '-o',label=label, c=colors[-1])
+        ax.plot(np.arange(1, max_iter+1), data[i].mean(axis=0), '-o',label=label, c=colors[-(i+1)] if single_pass else colors[-(i+2)])
         if fill:
-            ax.fill_between(np.arange(1, max_iter+1), data[i].mean(axis=0)-data[i].std(axis=0), data[i].mean(axis=0)+data[i].std(axis=0), alpha=0.2, color=colors[-(i+1)])
+            ax.fill_between(np.arange(1, max_iter+1), data[i].mean(axis=0)-data[i].std(axis=0), data[i].mean(axis=0)+data[i].std(axis=0), alpha=0.2, color=colors[-(i+1)] if single_pass else colors[-(i+2)])
             
-    if one_shot is not None:
-        for i in range(len(one_shot)):
-            ax.plot([1,max_iter], [one_shot[i].mean(), one_shot[i].mean()], '--', label=('One-shot single-pass' if i==0 else '_'), alpha=0.2, color='grey')
-            if i<=7:
-                ax.text(x=1,y=one_shot[i].mean()-0.011,s='n='+str(100*(i+1)),fontsize=9)
-        if i>7:
-            ax.text(x=1,y=one_shot[i].mean()+0.003,s='n='+str(100*(i+1)),fontsize=9)
+    one_shot_baseline(ax, one_shot, max_iter)
 
     ax.set_xlabel('Iterations')
     ax.set_ylabel(ylabel)
@@ -58,7 +53,9 @@ def iteration_plot(data,
     
     handles, labels = plt.gca().get_legend_handles_labels()
     
-    ax.legend(handles, labels,bbox_to_anchor=(0, 0.9, 1, 0.2), 
+    bbox_to_anchor = (0, 0.9, 1, 0.2) if len(labels) < 3 else (0, 0.95, 1, 0.2)
+    
+    ax.legend(handles, labels,bbox_to_anchor=bbox_to_anchor, 
               loc="upper center",
               borderaxespad=0,
               frameon=False,
@@ -67,6 +64,10 @@ def iteration_plot(data,
               shadow=False,
               fontsize = 13,
               handletextpad=0.1)
+    
+    if path is not None:
+        filename = ylabel+'_iterations.pdf'
+        fig.savefig(path+filename, bbox_inches='tight')
     
 def set_tick_params(ax, 
                     wd=3, 
@@ -81,6 +82,16 @@ def set_tick_params(ax,
     
     for axis in ['top','bottom','left','right']:
         ax.spines[axis].set_linewidth(1.3)
+        
+def one_shot_baseline(ax, one_shot, max_iter=50):
+    
+    if one_shot is not None:
+        for i in range(len(one_shot)):
+            ax.plot([1,max_iter], [one_shot[i].mean(), one_shot[i].mean()], '--', label=('One-shot single-pass' if i==0 else '_'), alpha=0.2, color='grey')
+            if i<=7:
+                ax.text(x=1,y=one_shot[i].mean()-0.011,s='n='+str(100*(i+1)),fontsize=9)
+        if i>7:
+            ax.text(x=1,y=one_shot[i].mean()+0.003,s='n='+str(100*(i+1)),fontsize=9)
 
 def plot_original_model(dataset,
                         model, 
