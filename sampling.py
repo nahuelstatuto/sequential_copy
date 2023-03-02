@@ -29,7 +29,6 @@ class Sampler():
         
         self.set_file()
         
-        
     def set_file(self):
         if self.from_file:
             if self.file_path:
