@@ -25,6 +25,10 @@ def define_loss(d, loss_name = 'UncertaintyError'):
         return tf.keras.losses.BinaryCrossentropy(from_logits=True)
     else:
         return tf.keras.losses.CategoricalCrossentropy(from_logits=True)
+'''
+###
+New version of tthis funtion is at models.py
+###
 
 def params_to_vec(model):
     """docstring for params_to_vec"""
@@ -37,6 +41,7 @@ def params_to_vec(model):
         dims+= np.shape(t0)[0]+np.shape(t1)[0]
     
     return final, dims
+'''
 
 def norm_theta(vec1,vec2):    
     ''' given two parameter's vectors, return the Euclidean norm '''
