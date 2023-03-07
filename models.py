@@ -6,7 +6,7 @@ from utils import MyRegularizer
 from base_model import CopyModel
 
 def params_to_vec(model,return_dims = False):
-    ## get the all model parameters
+    """Put model parameters into a list."""
     final = []
     dims = 0
     for layer in model.layers:
@@ -21,23 +21,34 @@ def params_to_vec(model,return_dims = False):
         return final
 
 class FeedForwardModel(CopyModel):
+    """Class to create, compile and train a Keras model."""
+    
     def __init__(self,
                  input_dim,
                  hidden_layers,
                  output_dim,
                  activation='relu',
                  seed=42):
-        
+        """
+        Args:
+            input_dim: an integer representing the number of input features.
+            hidden_layers: a list of integers representing the number of neurons in each hidden layer.
+            output_dim: an integer representing the number of output classes.
+            activation: a string representing the activation function to use (default is 'relu').
+            seed: an integer representing the random seed (default is 42).
+        """
         super(FeedForwardModel, self).__init__()
         tf.random.set_seed(seed)
         
+        # Initialize several instance variables
         self.acc_test = []
         self.acc_train = []
         self.rho = []
         self.n = []
         self.lmda_vector = []
         self.dense = []
-                
+        
+        # Create a list of dense layers, with the first one taking the input dimension as input shape
         if len(hidden_layers) > 0:
             self.dense.append(tf.keras.layers.Dense(hidden_layers[0], 
                                                   input_shape=(input_dim,), 
@@ -72,15 +83,20 @@ class FeedForwardModel(CopyModel):
         return super(FeedForwardModel,self).fit(x,y, epochs=epochs, batch_size=batch_size, verbose=0)
     
     def compile(self, optimizer, loss):
+        """Set the optimizer and the loss function."""
         super(FeedForwardModel, self).compile()
         self.optimizer = optimizer
         self.loss = loss 
         
     def train_step(self, data):
+        """
+            Define the train_step method for the model, which performs a forward pass, computes the loss and gradients,
+            updates the weights, and returns a dictionary of metric values.
+        """
         x, y = data
         with tf.GradientTape() as tape:
             y_pred = self(x, training=True)  # Forward pass
-            reg = tf.tanh(tf.math.reduce_sum(self.losses))
+            reg = tf.tanh(tf.math.reduce_sum(self.losses)) # reg <= 1
             
             # Compute the loss value (the loss function is configured in `compile()`)
             rho = self.loss(y, y_pred) / self.rho_max

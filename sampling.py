@@ -7,14 +7,29 @@ from numpy import genfromtxt
 from numpy import savetxt
 
 class Sampler():
-    """docstring for ... """ 
+    """Sampler class generates new samples and saves them to a file if desired."""
     
+    # Set the initial values for class variables
     data = None
     iteration = 0
     file = None
        
     def __init__(self, distr='Gaussian', d=2, n_classes=2, std=1.5, from_file=False,
                  to_file=False, file_path=None, automatic_fill=False, balancer=False, target=-1):
+        """Initializer for Sampler class. 
+        
+        Args:
+        distr (str): type of the distribution from which to generate new samples
+        d (int): number of dimensions in the data
+        n_classes (int): number of classes in the problem
+        std (float): standard deviation of the Gaussian distribution
+        from_file (bool): whether to read samples from a file
+        to_file (bool): whether to save generated samples to a file
+        file_path (str): path to the file with samples to read from or save to
+        automatic_fill (bool): whether to create a file and save the data in it or not
+        balancer (bool): whether to use the rBalancer function to balance the samples (useful with large dimensionality)
+        target (int): the index of the target column in the file with data labels (default: -1, last column)
+        """
         self.d = d
         self.n_classes = n_classes
         self.std = std
@@ -30,6 +45,7 @@ class Sampler():
         self.set_file()
         
     def set_file(self):
+        """Opens the file with samples for reading or creates a new file if it does not exist."""
         if self.from_file:
             if self.file_path:
                 self.file = self.open_file_for_read()
@@ -38,6 +54,7 @@ class Sampler():
                 self.from_file, self.to_file, self.automatic_fill  = False, False, False
         
     def open_file_for_read(self):
+        """Opens the file with samples for reading."""
         try:
             return open(os.path.join(self.file_path), 'rb')
         except:
@@ -51,6 +68,7 @@ class Sampler():
                 return None
 
     def create_sampling_file(self):
+        """Creates a new file for saving generated samples."""
         try:
             fp = open(os.path.join(self.file_path), 'wb')
             self.to_file = True
@@ -61,10 +79,21 @@ class Sampler():
             return None
             
     def close_file(self):
+        """Close file."""
         if self.file:
             self.file.close()        
         
     def get_samples(self, original, num_samples = 100):
+        """Get new samples from either file or generate them.
+
+        Args:
+        original: original model to label synthetic data
+        num_samples (int): number of samples to generate
+
+        Returns:
+        X_new: generated data
+        y_new: generated labels
+        """
         if self.from_file and self.file:
             X, y = self.read_samples_from_file(original, num_samples)
         elif self.from_file and not(self.file):
@@ -79,12 +108,24 @@ class Sampler():
         return X, y
 
     def read_samples_from_file(self, original, num_samples):
-        
+        """Read new samples from file. 
+
+        Args:
+        original: original model to label synthetic data
+        num_samples (int): number of samples to generate
+
+        Returns:
+        X_new: generated data
+        y_new: generated labels
+        """
+        #read the whole file the first time
         if self.iteration==0:
             self.data = genfromtxt(self.file, delimiter=',') 
+        
         X_new = np.empty((0, self.d))
         y_new = np.empty((0), dtype=int)
-            
+        
+        #read only "num_samples" lines
         for line in self.data[self.iteration*num_samples:(self.iteration+1)*num_samples]:
             X_new, y_new = np.vstack((X_new,np.asarray(line[:self.d]))), np.append(y_new,line[self.target])
 
@@ -103,7 +144,19 @@ class Sampler():
         return X_new, y_new
 
     def generate_samples(self, original, num_samples):
+        """Generate new samples from selected distributions (default: Gaussian.)
+
+        Args:
+        original: original model to label synthetic data
+        num_samples (int): number of samples to generate
+
+        Returns:
+        X_new: generated data
+        y_new: generated labels
+        """
+        
         if self.balancer:
+            #rBalancer is useful with large dimensionality
             X_new, y_new = rBalancer(N=0, d=self.d, K=self.n_classes, model=original,
                                      max_iter=10, N_batch=num_samples, low=0,
                                      high=2*np.sqrt(self.d))
@@ -120,6 +173,7 @@ class Sampler():
         return X_new, y_new
     
     def add_samples_to_file(self, X, y):
+        """Add data to a file."""
         self.file = open(os.path.join(self.file_path), 'a+')
         for X_,y_ in zip(X,y):            
             savetxt(self.file, np.asarray([ np.append(X_[:],y_)]), delimiter=',')
