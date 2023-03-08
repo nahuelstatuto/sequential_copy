@@ -25,23 +25,6 @@ def define_loss(d, loss_name = 'UncertaintyError'):
         return tf.keras.losses.BinaryCrossentropy(from_logits=True)
     else:
         return tf.keras.losses.CategoricalCrossentropy(from_logits=True)
-'''
-###
-New version of tthis funtion is at models.py
-###
-
-def params_to_vec(model):
-    """docstring for params_to_vec"""
-    final = []
-    dims = 0
-    for layer in model.layers:
-        t0 = tf.reshape(layer.trainable_variables[0], [np.shape(layer.trainable_variables[0])[0]*np.shape(layer.trainable_variables[0])[1]])
-        t1 = tf.reshape(layer.trainable_variables[1], [np.shape(layer.trainable_variables[1])[0]])
-        final.append(tf.concat([t0,t1],0))
-        dims+= np.shape(t0)[0]+np.shape(t1)[0]
-    
-    return final, dims
-'''
 
 def norm_theta(vec1,vec2):    
     """Given two parameter's vectors, return the Euclidean norm."""
@@ -49,26 +32,6 @@ def norm_theta(vec1,vec2):
     for i in range(np.shape(vec1)[0]):
         t = tf.add(t,tf.reduce_sum(tf.square(vec1[i] - vec2[i])))
     return tf.cast(t, tf.float64)
-'''
-###
-New version of tthis funtion is at sequential_copy.py
-###
-def evaluation(model, X, y, d, n_classes):
-    """Evaluate the model accuracy."""
-    try:
-        y_pred_ohe = model.predict(X, verbose=0)
-        y_pred = np.argmax(y_pred_ohe, axis=1)
-    except:
-        y_pred = model.predict(X)
-        
-    try:
-        if np.shape(y)[1]==n_classes:
-            y = np.argmax(y, axis=1)
-    except:
-        pass
-
-    return sum(y_pred == y)/len(X)
-'''
 
 class LambdaParameter():
     """A class for managing the lambda parameter used for regularization."""
